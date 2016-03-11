@@ -1,28 +1,18 @@
 var express = require('express');
+var bodyParser = require('body-parser');
 var app = express();
 var PORT = process.env.PORT || 3000;
-var todos = [{
-	id : 1,
-	discription : "want to have a meeting with ",
-	completed : false
+var todos = [];
+var todoNextId = 1;
 
-
-},
-{
-	id : 2,
-	discription : "want to go for grocery item",
-	completed : false
-},
-	{id : 3,
-	discription : "meeting with mummy",
-	completed : true
-}
-] ;
+app.use(bodyParser.json());
 
 app.get('/', function (req, res) {
 
 res.send('to do api');
 });
+
+//GET /todos
 
 app.get('/todos', function(req, res){
 res.json(todos); //this converted todos into json 
@@ -46,6 +36,18 @@ else {
 
 
 });
+
+// POST /todos
+app.post('/todos', function (req, res){
+ var body = req.body;
+
+ body.id = todoNextId++;
+ todos.push(body);
+
+ console.log (todos);
+ res.json(body);
+
+}) ;
 
 app.listen(PORT, function(){
 
