@@ -64,6 +64,28 @@ picked.description = picked.description.trim();
 
 }) ;
 
+
+app.delete('/todos/:id', function (req, res){
+
+var todoId = parseInt(req.params.id,10);
+var matchedTodo = _.findWhere(todos, {id: todoId});
+  
+  
+
+  if (!matchedTodo) {
+
+  	res.status(404).json({" error" : "no todo found with id mentioned"});
+  }
+
+  else{
+  	todos =_.without(todos,matchedTodo);
+  	res.json(matchedTodo);
+  };
+
+
+
+});
+
 app.listen(PORT, function(){
 
 console.log('Server is running on port no. ' + PORT);
