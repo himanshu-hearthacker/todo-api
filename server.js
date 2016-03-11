@@ -52,7 +52,7 @@ app.post('/todos', function (req, res){
  	return res.status(400).send();
  }
 
-picked.description ===picked.description.trim();
+picked.description = picked.description.trim();
 
 
 
