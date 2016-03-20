@@ -1,6 +1,8 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var _ = require('underscore');
+var db = require('./db.js');
+
 var app = express();
 var PORT = process.env.PORT || 3000;
 var todos = [];
@@ -14,11 +16,30 @@ app.get('/', function(req, res) {
 });
 
 //GET /todos
-
+// GET /todos?completed=false&q=work
 app.get('/todos', function(req, res) {
-	res.json(todos); //this converted todos into json 
+	var queryParams = req.query;
+	var filteredTodos = todos;
 
-})
+	if (queryParams.hasOwnProperty('completed') && queryParams.completed === 'true') {
+		filteredTodos = _.where(filteredTodos, {
+			completed: true
+		});
+	} else if (queryParams.hasOwnProperty('completed') && queryParams.completed === 'false') {
+		filteredTodos = _.where(filteredTodos, {
+			completed: false
+		});
+	}
+
+	if (queryParams.hasOwnProperty('q') && queryParams.q.length > 0) {
+		filteredTodos = _.filter(filteredTodos, function(todo) {
+			return todo.description.toLowerCase().indexOf(queryParams.q.toLowerCase()) > -1;
+		});
+	}
+
+	res.json(filteredTodos);
+});
+
 app.get('/todos/:id', function(req, res) {
 	var todoId = parseInt(req.params.id, 10);
 	//console.log(typeof todoId);
@@ -46,21 +67,28 @@ app.post('/todos', function(req, res) {
 	// use pick method  to only pick description and completed
 
 	var picked = _.pick(body, 'completed', 'description');
+	db.todo.create(body).then(function(todo){
+		res.json(todo.toJSON());
 
-	if ((!_.isBoolean(picked.completed)) || (!_.isString(picked.description)) || (picked.description.trim().length === 0)) {
+	},function(e){
+		res.status(400).json(e);
 
-		return res.status(400).send();
-	}
+	});
 
-	picked.description = picked.description.trim();
+	//if ((!_.isBoolean(picked.completed)) || (!_.isString(picked.description)) || (picked.description.trim().length === 0)) {
+
+	//	return res.status(400).send();
+	//	}
+
+	//	picked.description = picked.description.trim();
 
 
 
-	picked.id = todoNextId++;
-	todos.push(picked);
+	//	picked.id = todoNextId++;
+	//	todos.push(picked);
 
-	console.log(todos);
-	res.json(picked);
+	//	console.log(todos);
+	//	res.json(picked);
 
 });
 
@@ -117,15 +145,18 @@ app.put('/todos/:id', function(req, res) {
 		res.status(400).send();
 
 	}
-     _.extend(matchedTodo, validAttribute);
+	_.extend(matchedTodo, validAttribute);
 
-     res.json(matchedTodo);
+	res.json(matchedTodo);
 
 
 });
 
-app.listen(PORT, function() {
+db.sequelize.sync({force : true}).then(function() {
 
-	console.log('Server is running on port no. ' + PORT);
+			app.listen(PORT, function() {
 
-})
+				console.log('Server is running on port no. ' + PORT);
+
+			});
+		});
